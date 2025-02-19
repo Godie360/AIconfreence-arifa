@@ -12,8 +12,10 @@ class CreateSponsorsTable extends Migration
             $table->id();
             $table->string('company_name');
             $table->string('contact_person');
-            $table->string('logo_path'); // Assuming you store logo paths
+            $table->string('logo_path')->nullable(); // Assuming you store logo paths
             $table->string(column: 'phone');
+            $table->string('email');
+            $table->string('sponsorship_level');
             $table->string('link');
             $table->enum('package_type', ['Gold', 'Silver', 'Bronze']);
             $table->tinyInteger('status')->default(0); //0 pending 1 approved

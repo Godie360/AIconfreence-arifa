@@ -16,6 +16,8 @@ class Sponsor extends Model
         'contact_person',
         'logo_path',
         'phone',
+        'email',
+        'sponsorship_level',
         'link',
         'package_type',
         'invoice_number',

@@ -16,7 +16,7 @@ Route::controller(PageController::class)->group(function () {
     Route::get('/speaker/register', 'speaker_register')->name('speaker.register');
     Route::post('/speaker/store', 'store_speaker_register')->name('store_speaker.register');
     Route::get('/sponsors', 'sponsors')->name('sponsors');
-    Route::post('/sponsors/register', 'registerSponsors')->name('sponsor.register');
+    Route::post('/sponsors/register', 'registerSponsors')->name('sponsor_register');
     Route::get('/speaker/detils', 'speaker')->name('speaker-details');
 
     Route::post('/participants/register/store', 'store_participant_register')->name('participants_registration.submit');

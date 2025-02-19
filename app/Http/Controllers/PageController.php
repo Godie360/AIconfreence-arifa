@@ -21,6 +21,8 @@ use App\Models\SponsorshipPackage;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Unique;
 use Symfony\Contracts\Service\Attribute\Required;
+use Illuminate\Support\Facades\DB;
+
 
 class PageController extends Controller
 {
@@ -338,103 +340,123 @@ class PageController extends Controller
     }
 
 
+public function registerSponsors(Request $request)
+{
+    try {
+        DB::beginTransaction(); // Start transaction
+
+        // Validate the input data
+        $validatedData = $request->validate([
+            'company_name' => 'required|string|max:255',
+            'link' => 'required',
+            'contact_person' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:sponsors,email', // Ensure email is unique
+            'phone' => 'required|string|max:15',
+            'sponsorship_level' => 'required',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validate image
+        ]);
+
+        // Handle the image upload if present
+        $imageName = null;
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '-' . $image->getClientOriginalName();
+            $image->move(public_path('assets/images/sponsors'), $imageName);
+        }
+
+        // Generate a unique invoice number
+        $invoiceNumber = mt_rand(100000, 999999);
+
+        // Get sponsorship package details
+        $package = SponsorshipPackage::where('name', $validatedData['sponsorship_level'])->first();
+        if (!$package) {
+            throw new \Exception("Sponsorship package not found.");
+        }
+
+        $packageType = str_contains($validatedData['sponsorship_level'], 'Silver') ? 'Silver' : $validatedData['sponsorship_level'];
 
 
+        $sponsor = new Sponsor();
+        $sponsor->package_type = $packageType;
+        $sponsor->company_name = $validatedData['company_name'];
+        $sponsor->link = $validatedData['link'];
+        $sponsor->contact_person = $validatedData['contact_person'];
+        $sponsor->phone = $validatedData['phone'];
+        $sponsor->sponsorship_level = $validatedData['sponsorship_level']; // Explicitly set this field
+        $sponsor->email = $validatedData['email'];
+        $sponsor->invoice_number = $invoiceNumber;
+        $sponsor->status = 0;
+        $sponsor->logo_path = $imageName ? "assets/images/sponsors/{$imageName}" : null;
 
+        $sponsor->save();
 
-    public function registerSponsors(Request $request)
-    {
-        // dd($request);
+        DB::commit(); // Commit transaction
+
+        // Prepare the email body
+        $emailBody = "
+        <h2>Dear {$sponsor->company_name}, from {$sponsor->company_name}<br>Thank You for Registering!</h2>
+        <p>We are thrilled to confirm your registration for the upcoming conference.</p>
+        <p><strong>Conference Title:</strong> ICAFW 2024</p>
+        <p><strong>Date:</strong> 7<sup>th</sup> December 2024</p>
+        <p><strong>Location:</strong> Four Points By Sheraton, Dar es Salaam, Tanzania</p>
+        <p><strong>Invoice Number:</strong> {$invoiceNumber}</p>
+        <p><strong>Amount Due:</strong> \${$package->price}</p>
+        <p>Your participation is highly valued, and we are excited to have you with us at this significant event.</p>
+        <p>Please complete the payment at your earliest convenience to secure your spot. Once the payment is made, click the button below to verify your payment:</p>
+
+        <a href='https://aiconference.arifa.org/sponsors?verifypayments={$invoiceNumber}' style='
+            display: inline-block;
+            padding: 10px 15px;
+            color: #fff;
+            background-color: #007bff;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+        '>Verify Payment</a>
+
+        <p>If you have any questions or need further assistance, feel free to reach out to us.</p>
+        ";
+
+        // Send the email using the email service
         try {
-            // Validate the input data
-            $validatedData = $request->validate([
-                'company_name' => 'required|string|max:255',
-                'contact_person' => 'required|string|max:255',
-                'email' => 'required|email|max:255',
-                'phone' => 'required|string|max:15',
-                'sponsorship_level' => 'required|exists:sponsorship_packages,name',
-                'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048', // Validate image
-            ]);
-
-            // Handle the image upload if present
-            $imageName = null;
-            if ($request->hasFile('image')) {
-                // Define the destination path (public/assets/images/speaker)
-                $destinationPath = public_path('assets/images/sponsors');
-                $imageName = time() . '-' . $request->file('image')->getClientOriginalName();
-                $request->file('image')->move($destinationPath, $imageName);
-            }
-
-            // Generate a unique invoice number
-            $invoiceNumber = mt_rand(100000, 999999);
-
-            $package = SponsorshipPackage::where('name', $validatedData['sponsorship_level'])->first();
-
-            // Store sponsor information in the database
-            $sponsor = new Sponsor();
-            $sponsor->company_name = $validatedData['company_name'];
-            $sponsor->phone = $validatedData['phone'];
-            $sponsor->package_type = $validatedData['sponsorship_level'];
-            $sponsor->email = $validatedData['email'];
-            $sponsor->invoice_number = $invoiceNumber;
-            $sponsor->status = 0; // 0 means pending, waiting for admin approval
-
-            // Optional: Set logo path or link if provided
-            // $sponsor->logo_path = $request->logo_path ?? null;
-            // $sponsor->link = $request->link ?? null;
-
-            // dd($sponsor);
-            $sponsor->save();
-
-            // Send a confirmation email to the sponsor
-            $emailBody = "
-            <h2>Dear {$sponsor->company_name}, from {$sponsor->company_name}<br>Thank You for Registering!</h2>
-                <p>We are thrilled to confirm your registration for the upcoming conference.</p>
-                <p><strong>Conference Title:</strong> ICAFW 2024</p>
-                <p><strong>Date:</strong> 7<sup>th</sup> December 2024</p>
-                <p><strong>Location:</strong> Four Points By Sheraton, Dar es Salaam, Tanzania</p>
-                <p><strong>Invoice Number:</strong> {$validatedData['invoice_number']}</p>
-                <p><strong>Amount Due:</strong> \${$package->price}</p>
-                <p>Your participation is highly valued, and we are excited to have you with us at this significant event.</p>
-                <p>Please complete the payment at your earliest convenience to secure your spot. Once the payment is made, click the button below to verify your payment:</p>
-
-                <a href='https://aiconference.arifa.org/sponsors?verifypayments={$validatedData['invoice_number']}' style='
-                    display: inline-block;
-                    padding: 10px 15px;
-                    color: #fff;
-                    background-color: #007bff;
-                    text-decoration: none;
-                    border-radius: 5px;
-                    font-size: 16px;
-                    font-weight: bold;
-                '>Verify Payment</a>
-
-                <p>If you have any questions or need further assistance, feel free to reach out to us.</p>
-            ";
-
             $this->emailService->sendEmail(
                 $validatedData['email'],
                 'Sponsorship Registration Confirmation',
                 $validatedData['contact_person'],
                 $emailBody
             );
-
-            // Flash a success message
-            session()->flash('status', 'success');
-            session()->flash('message', 'Successfully registered as a speaker! Please wait for review; you will receive an email shortly.');
-        } catch (\Exception $e) {
-            // Check for duplicate email error (unique constraint violation)
-            if ($e->getCode() === '23000') { // 23000 is the SQL state code for integrity constraint violation
-                session()->flash('status', 'error');
-                session()->flash('message', 'The email provided is already registered. Please use a different email or check your inbox for confirmation.');
-            } else {
-                session()->flash('status', 'error');
-                session()->flash('message', 'Registration failed. Please try again.');
-            }
+        } catch (\Exception $emailException) {
+            // Log the error in case of failure
+            Log::error('Email sending failed: ' . $emailException->getMessage());
+            // Optionally, you could handle the email failure here, such as setting a flag or sending an alternate response
         }
 
-        return back()->with('success', 'Speaker registered successfully! Email has been sent.');
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Sponsor registered successfully! A confirmation email has been sent.',
+        ]);
+
+    } catch (\Exception $e) {
+        DB::rollBack(); // Rollback transaction if error occurs
+
+        // Log the detailed error for debugging
+        Log::error('Sponsor Registration Error: ' . $e->getMessage(), [
+            'stack' => $e->getTraceAsString(), // Log the stack trace for deeper insight
+            'input_data' => $request->all(), // Log the input data for debugging
+        ]);
+
+        // Send back the detailed error message
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Registration failed. Please try again later.',
+            'error_details' => $e->getMessage(), // Send the error message in the response
+        ]);
     }
+}
+
+
+
 
 
 

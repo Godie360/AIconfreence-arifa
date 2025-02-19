@@ -80,40 +80,67 @@
                     </div>
                 </div>
 
+<div class="col-md-6">
+    <h2 class="card-title">Registration Form</h2>
+    <form id="sponsorForm" class="custom-form" enctype="multipart/form-data">
+        @csrf
+        <div class="form-group">
+            <label for="company_name">Company Name</label>
+            <input type="text" id="company_name" name="company_name" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="contact_person">Contact Person</label>
+            <input type="text" id="contact_person" name="contact_person" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="phone">Phone Number</label>
+            <input type="tel" id="phone" name="phone" class="form-control" required>
+        </div>
+        <div class="form-group">
+            <label for="sponsorship_level">Sponsorship Level</label>
+            <select id="sponsorship_level" name="sponsorship_level" class="form-control" required>
+                @foreach ($SponsorshipPackages as $package)
+                    <option value="{{ $package->name }}">
+                        {{ $package->name }} - ${{ number_format($package->price, 0) }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="logo">Company Logo</label>
+            <input type="file" id="logo" name="logo" class="form-control" accept="image/*" required>
+        </div>
+        <div class="form-group">
+            <label for="link">Website Link</label>
+            <input type="url" id="link" name="link" class="form-control">
+        </div>
+        <div class="form-group">
+            <label for="package_type">Package Type</label>
+            <select id="package_type" name="package_type" class="form-control" required>
+                <option value="Gold">Gold</option>
+                <option value="Silver">Silver</option>
+                <option value="Bronze">Bronze</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="status">Status</label>
+            <select id="status" name="status" class="form-control">
+                <option value="0">Pending</option>
+                <option value="1">Approved</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="invoice_number">Invoice Number</label>
+            <input type="number" id="invoice_number" name="invoice_number" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Register as Sponsor</button>
+    </form>
+</div>
 
-                <div class="col-md-6">
-                    <h2 class="card-title">Registration Form</h2>
-                    <form action="{{ route('sponsor.register') }}" method="POST" class="custom-form">
-                        @csrf
-                        <div class="form-group">
-                            <label for="company_name">Company Name</label>
-                            <input type="text" id="company_name" name="company_name" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="contact_person">Contact Person</label>
-                            <input type="text" id="contact_person" name="contact_person" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="email">Email</label>
-                            <input type="email" id="email" name="email" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="phone">Phone Number</label>
-                            <input type="tel" id="phone" name="phone" class="form-control" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="sponsorship_level">Sponsorship Level</label>
-                            <select id="sponsorship_level" name="sponsorship_level" class="form-control" required>
-                                @foreach ($SponsorshipPackages as $package)
-                                    <option value="{{ $package->name }}">
-                                        {{ $package->name }} - ${{ number_format($package->price, 0) }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Register as Sponsor</button>
-                    </form>
-                </div>
             </div>
         </div>
     </div>
@@ -153,6 +180,53 @@
     </style>
 
 
+<script>
+$(document).ready(function () {
+    $("#sponsorForm").submit(function (e) {
+        e.preventDefault(); // Prevent normal form submission
+
+        var form = $(this);
+        var formData = new FormData(this); // Use FormData for file upload
+        formData.append('_token', "{{ csrf_token() }}"); // Add CSRF token manually
+
+        $.ajax({
+            url: "{{ route('sponsor_register') }}", // Move route here
+            type: "POST",
+            data: formData,
+            contentType: false,  // Required for file upload
+            processData: false,  // Required for file upload
+            beforeSend: function () {
+                form.find("button[type='submit']").prop("disabled", true).text("Processing...");
+            },
+            success: function (response) {
+                if (response.status === "success") {
+                    alert(response.message); // Show success message
+
+                    setTimeout(function () {
+                        form[0].reset(); // Reset the form
+                        location.reload(); // Refresh the page after 2 seconds
+                    }, 2000); // 2000 milliseconds = 2 seconds
+                } else {
+                    alert("Unexpected response: " + response.message);
+                }
+            },
+            error: function (xhr) {
+                var response = xhr.responseJSON;
+
+                if (xhr.status === 422) {
+                    let errors = Object.values(response.errors).flat().join("\n");
+                    alert("Validation Errors:\n" + errors);
+                } else {
+                    alert("Error: " + response.message + "\n" + (response.error_detail || ""));
+                }
+            },
+            complete: function () {
+                form.find("button[type='submit']").prop("disabled", false).text("Register as Sponsor");
+            }
+        });
+    });
+});
+</script>
 
 
     {{-- validation --}}

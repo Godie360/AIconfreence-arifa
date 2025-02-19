@@ -81,8 +81,7 @@
 
 
 
-                            <div class="custom-card">
-                                <!-- Bank details section -->
+                            {{-- <div class="custom-card">
                                 <h3 class="mt-4">Bank Details for Payment:</h3>
                                 <h5 style="color: blue;">Every Payment Should be done under this Account</h5>
                                 <ul class="list-unstyled">
@@ -94,12 +93,11 @@
                                     <li><strong>SWIFT/IBAN:</strong> CORUTZTZ</li>
                                     <li><strong>Contact:</strong> +255 742 372 702</li>
                                     <li><strong>Email:</strong> conference@arifa.org</li>
-                                    {{-- <li>already registered? create an invoice now</li> --}}
                                     <button type="button" class="btn btn-secondary" onclick="openModal()">Verify
                                         Payment</button>
 
                                 </ul>
-                            </div>
+                            </div> --}}
 
 
                         </div>

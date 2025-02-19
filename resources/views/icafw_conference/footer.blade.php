@@ -6,9 +6,9 @@
                 <!-- About the Conference Section -->
                 <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 about-widget">
                     <h4 class="title">ABOUT THE CONFERENCE</h4>
-                    <p><strong>Title:</strong> ICAFW 2024</p>
+                    <p><strong>Title:</strong> ICAFW 2025</p>
                     <p><strong>Theme:</strong>Bridging AI Horizons for Future of Work</p>
-                    <p><strong>Date:</strong> 7<sup>th</sup> December 2024</p>
+                    <p><strong>Date:</strong> 7<sup>th</sup> May, 29 - 31 2025</p>
                     <p><strong>Location:</strong> Four Points By Sheraton, Dar es Salaam, Tanzania</p>
                     <p><a href="{{ route('about') }}" style="color: white;">READ MORE...</a></p>
                 </div>
